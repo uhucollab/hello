@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>7 Years — For You (spaced carousel)</title>
+  <style>
+    :root{
+      --bg:#ffe082;           /* main background tone */
+      --accent:#ff6b81;
+      --muted:#f0f2ff;
+      --carousel-size:1100px;
+      --thumb-w:520px; --thumb-h:340px;
+      --gap:28px;
+      --angle-step:18deg;     /* better for 18 cards */
+      --max-visible:5;
+    }
+    *{box-sizing:border-box}
+    html,body{
+      height:100%;margin:0;
+      font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      background:radial-gradient(circle at top,#fffde7 0,#ffe082 45%,#ffca28 100%);
+      color:#111;
+    }
+    .container{max-width:1200px;margin:28px auto;padding:20px}
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+    }
+
+    /* TITLE + CAKE */
+    h1{margin:0}
+    .title{
+      margin:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:14px;
+      color:white;
+      font-size:26px;
+      font-weight:700;
+      letter-spacing:0.03em;
+    }
+    .title span{display:inline-flex;align-items:center}
+    .title-left,.title-right{white-space:nowrap}
+
+    .cake-icon{
+      position:relative;
+      width:64px;
+      height:64px;
+      display:inline-flex;
+      align-items:flex-end;
+      justify-content:center;
+    }
+
+    .cake-base{
+      position:absolute;
+      bottom:4px;
+      width:48px;
+      height:22px;
+      background:#ff9aa2;
+      border-radius:12px 12px 8px 8px;
+      box-shadow:0 6px 14px rgba(0,0,0,0.4);
+    }
+
+    .cake-icing{
+      position:absolute;
+      bottom:22px;
+      width:48px;
+      height:14px;
+      border-radius:999px;
+      background:repeating-linear-gradient(
+        -45deg,
+        #ffe6f2 0 6px,
+        #ffd1ea 6px 12px
+      );
+      box-shadow:0 3px 6px rgba(0,0,0,0.2) inset;
+    }
+
+    .candle-body{
+      position:absolute;
+      bottom:32px;
+      width:10px;
+      height:20px;
+      background:#ffffff;
+      border-radius:5px;
+      box-shadow:0 0 2px rgba(0,0,0,0.5);
+      overflow:hidden;
+    }
+    .candle-body::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:repeating-linear-gradient(
+        90deg,
+        #ff6b81 0 3px,
+        #ffd1ea 3px 6px
+      );
+      opacity:0.7;
+    }
+
+    .flame{
+      position:absolute;
+      bottom:52px;
+      width:18px;
+      height:26px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      filter:drop-shadow(0 0 8px rgba(255,210,60,0.95));
+      animation:flicker 0.7s infinite alternate ease-in-out;
+    }
+
+    .flame-inner{
+      width:12px;
+      height:20px;
+      border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;
+      background:radial-gradient(circle at 30% 20%,
+        #ffffff 0,
+        #ffe28a 35%,
+        #ffb347 65%,
+        #ff9100 85%,
+        transparent 100%
+      );
+      transform-origin:50% 100%;
+      animation:flameShape 0.7s infinite alternate ease-in-out;
+    }
+
+    @keyframes flicker{
+      0%{transform:translateX(-1px) scale(1);}
+      100%{transform:translateX(1px) scale(1.05);}
+    }
+    @keyframes flameShape{
+      0%{transform:scaleY(1);}
+      100%{transform:scaleY(1.18);}
+    }
+
+    .sub{
+      color:rgba(255,255,255,0.9);
+      font-size:13px;
+      margin-top:4px;
+    }
+
+    .hero{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:14px;
+      margin-top:18px;
+    }
+
+    .carousel-title{
+      color:white;
+      font-size:20px;
+      font-weight:600;
+      margin:4px 0 10px;
+      text-align:center;
+    }
+
+    /* carousel area */
+    .carousel-wrap{width:100%;display:flex;flex-direction:column;align-items:center}
+    #carousel{
+      width:var(--carousel-size);
+      height:720px;
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:visible;
+      -webkit-user-select:none;
+      user-select:none;
+    }
+
+    .slot{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform-origin:center center;
+      transition:transform .65s cubic-bezier(.2,.9,.2,1),opacity .45s,filter .3s;
+      will-change:transform,opacity;
+      cursor:pointer;
+      touch-action:manipulation;
+    }
+
+    .card-3d{
+      width:var(--thumb-w);
+      height:var(--thumb-h);
+      perspective:1200px;
+    }
+
+    .card-inner{
+      position:relative;
+      width:100%;
+      height:100%;
+      transform-style:preserve-3d;
+      transition:transform .7s cubic-bezier(.2,.9,.2,1);
+      border-radius:12px;
+    }
+    .card-inner.flipped{transform:rotateY(180deg)}
+
+    /* FRONT & BACK SURFACES – now flex to center content */
+    .card-front,
+    .card-back{
+      position:absolute;
+      inset:0;
+      border-radius:12px;
+      backface-visibility:hidden;
+      overflow:hidden;
+      box-shadow:0 16px 40px rgba(0,0,0,0.35);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    /* IMAGES – contain, no cropping, centered */
+    .card-front img{
+      max-width:100%;
+      max-height:100%;
+      width:auto;
+      height:auto;
+      object-fit:contain;
+      display:block;
+      background:#f5f5f5; /* behind letterbox bars */
+    }
+
+    .card-back{
+      padding:18px;
+      background:linear-gradient(180deg,#ffffff 0%, rgba(255,255,255,0.95) 100%);
+      color:#111;
+      transform:rotateY(180deg);
+      font-weight:600;
+      text-align:center;
+      font-size:18px;
+      line-height:1.4;
+    }
+
+    .slot.center{z-index:60;filter:none;opacity:1}
+    .slot.side{z-index:40;filter:grayscale(.02) brightness(.98);opacity:0.98}
+    .slot.dim{z-index:20;opacity:.2;filter:grayscale(.25) brightness(.9)}
+    .slot.dim .card-3d{transform:scale(.85)}
+
+    .dots{display:flex;gap:8px;margin-top:14px}
+    .dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.6);opacity:.6;cursor:pointer}
+    .dot.active{background:white;opacity:1;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+
+    @media (max-width:1100px){
+        :root{--carousel-size:920px;--thumb-w:420px;--thumb-h:280px}
+        #carousel{height:620px}
+    }
+    @media (max-width:900px){
+        :root{--carousel-size:700px;--thumb-w:360px;--thumb-h:240px;--angle-step:16deg}
+        #carousel{height:540px}
+    }
+    @media (max-width:640px){
+        :root{--carousel-size:95vw;--thumb-w:60vw;--thumb-h:40vw;--angle-step:14deg}
+        #carousel{height:420px}
+        .title{font-size:22px;flex-wrap:wrap}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1 class="title">
+          <span class="title-left">7 Year</span>
+          <span class="cake-icon" aria-hidden="true">
+            <span class="cake-base"></span>
+            <span class="cake-icing"></span>
+            <span class="candle-body"></span>
+            <span class="flame">
+              <span class="flame-inner"></span>
+            </span>
+          </span>
+          <span class="title-right">Anniversary</span>
+        </h1>
+        <div class="sub">For you — click center card to flip and read the message</div>
+      </div>
+    </header>
+
+    <main class="hero">
+      <h2 class="carousel-title">Our Memories</h2>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center">
+        <div class="carousel-wrap">
+          <div id="carousel" aria-label="circular gallery">
+
+            <!-- 0 -->
+            <div class="slot" data-index="0">
+              <div class="card-3d"><div class="card-inner">
+                <div class="card-front">
+                  <img src="C:\Users\Tayyab\Documents\DSA\project\imgs\1.jpg"
+                       alt="Memory 1"
+                       data-message="Our first silly Selfie jo tm lene k baad boli thi chal chal nikal😂. It still makes me smile">
+                </div>
+                <div class="card-back"></div>
+              </div></div>
+            </div>
+
+            <!-- 1 -->
+            <div class="slot" data-index="1">
+              <div class="card-3d"><div class="card-inner">
+                <div class="card-front">
+                  <img src="C:\Users\Tayyab\Documents\DSA\project\imgs\2.jpg"
+                       alt="Memory 2"
+                       data-message="I love every time you hold my arm . It makes me feel ki I'm your man and 
+                       you are my girl. You look very cute in this photo baby and as always I'm too lucky to have you as my world❤️">
+                </div>
+                <div class="card-back"></div>
+              </div></div>
+            </div>
+
+            <!-- 2 -->
+            <div class="slot" data-index="2">
+              <div class="card-3d"><div class="card-inner">
+                <div class="card-front">
+                  <img src="C:\Users\Tayyab\Documents\DSA\project\imgs\3.jpg"
+                       alt="Memory 3"
+                       data-message="This was the day of our first scooty ride.. I look so chomu in
+                        this one and I remember you being scared behind me 😂😂">
+                </div>
+                <div class="card-back"></div>
+              </div></div>
+            </div>
+
+            <!-- 3 -->
+            <div class="slot" data-index="3">
+              <div class="card-3d"><div class="card-inner">
+                <div class="card-front">
+                  <img src="C:\Users\Tayyab\Documents\DSA\project\imgs\4.jpg"
+                       alt="Memory 4"
+                       data-message="This was the day when we were discussing our Apprentice wala 
+                       situation and you were telling me to calm down. You have been my therapist baby😘 and 
+                       thank you for always supporting my decision....Although now i think apprentice hi krlena chahiye thaaa😂">
+                </div>
+                <div class="card-back"></div>
+              </div></div>
+            </div>
+
+            <!-- 4 -->
+            <div class="slot" data-index="4">
+              <div class="card-3d"><div class="card-inner">
+                <div class="card-front">
+                  <img src="C:\Users\Tayyab\Documents\DSA\project\imgs\5.jpg"
+                       alt="Memory 5"
+                       data-message="The day when I found myself on the edge of holding of myself🤭. And its not my fault you were looking so fine
+                       and by this time everyone considered us as couples and I kind of liked it alot. Also the day i got my first flying kiss🌚❤️">
+                </div>
+                <div class="card-back"></div>
+              </div></div>
+            </div>
+
+            <!-- 5 -->
+            <div class="slot" data-index="5">
+              <div class="card-3d"><div class="card-inner">
+                <div class="card-front">
+                  <img src="C:\Users\Tayyab\Documents\DSA\project\imgs\6.jpg"
+                       alt="Memory 6"
+                       data-message="God you looked so good that day baby...and that hug I miss it soo much. First time i felt ki you reallyy miss me">
+                </div>
+                <div class="card-back"></div>
+              </div></div>
+            </div>
+
+            <!-- 6 -->
+            <div class="slot" data-index="6">
+              <div class="card-3d"><div class="card-inner">
+                <div class="card-front">
+                  <img src="C:\Users\Tayyab\Documents\DSA\project\imgs\7.jpg"
+                       alt="Memory 7"
+                       data-message="This was our first time meeting in P&M mall. The Darr and the excitement i felt in my stomach was toooo much😂😂">
+                </div>
+                <div class="card-back"></div>
+              </div></div>
+            </div>
+
+            <!-- 7 -->
+            <div class="slot" data-index="7">
+              <div class="card-3d"><div class="card-inner">
+                <div class="card-front">
+                  <img src="C:\Users\Tayyab\Documents\DSA\project\imgs\8.jpg"
+                       alt="Memory 8"
+                       data-message="This was the first time when you held my ar and meant the world to me">
+                </div>
+                <div class="card-back"></div>
+              </div></div>
+            </div>
+
+            <!-- 8 -->
+            <div class="slot" data-index="8">
+              <div class="card-3d"><div class="card-inner">
+                <div class="card-front">
+                  <img src="C:\Users\Tayyab\Documents\DSA\project\imgs\9.jpg"
+                       alt="Memory 9"
+                       data-message="That random weekday that felt like a holiday just because we were together.">
+                </div>
+                <div class="card-back"></div>
+              </div></div>
+            </div>
+
+            <!-- 9 -->
+            <div class="slot" data-index="9">
+              <div class="card-3d"><div class="card-inner">
+                <div class="card-front">
+                  <img src="C:\Users\Tayyab\Documents\DSA\project\imgs\10.jpg"
+                       alt="Memory 10"
+                       data-message="The surprise you planned that I’ll never forget.">
+                </div>
+                <div class="card-back"></div>
+              </div></div>
+            </div>
+
+            <!-- 10 -->
+            <div class="slot" data-index="10">
+              <div class="card-3d"><div class="card-inner">
+                <div class="card-front">
+                  <img src="C:\Users\Tayyab\Documents\DSA\project\imgs\11.jpg"
+                       alt="Memory 11"
+                       data-message="That time we tried to bake and set off the fire alarm—pure chaos, pure love.">
+                </div>
+                <div class="card-back"></div>
+              </div></div>
+            </div>
+
+            <!-- 11 -->
+            <div class="slot" data-index="11">
+              <div class="card-3d"><div class="card-inner">
+                <div class="card-front">
+                  <img src="C:\Users\Tayyab\Documents\DSA\project\imgs\12.jpg"
+                       alt="Memory 12"
+                       data-message="A quiet evening, a blanket, and your head on my shoulder.">
+                </div>
+                <div class="card-back"></div>
+              </div></div>
+            </div>
+
+            <!-- 12 -->
+            <div class="slot" data-index="12">
+              <div class="card-3d"><div class="card-inner">
+                <div class="card-front">
+                  <img src="C:\Users\Tayyab\Documents\DSA\project\imgs\13.jpg"
+                       alt="Memory 13"
+                       data-message="The concert where you knew every lyric and I just watched you glow.">
+                </div>
+                <div class="card-back"></div>
+              </div></div>
+            </div>
+
+            <!-- 13 -->
+            <div class="slot" data-index="13">
+              <div class="card-3d"><div class="card-inner">
+                <div class="card-front">
+                  <img src="C:\Users\Tayyab\Documents\DSA\project\imgs\14.jpg"
+                       alt="Memory 14"
+                       data-message="The photo that still makes me think: ‘How did I get this lucky?’">
+                </div>
+                <div class="card-back"></div>
+              </div></div>
+            </div>
+
+            <!-- 14 -->
+            <div class="slot" data-index="14">
+              <div class="card-3d"><div class="card-inner">
+                <div class="card-front">
+                  <img src="C:\Users\Tayyab\Documents\DSA\project\imgs\15.jpg"
+                       alt="Memory 15"
+                       data-message="The day we promised we’d always have each other’s back.">
+                </div>
+                <div class="card-back"></div>
+              </div></div>
+            </div>
+
+            <!-- 15 -->
+            <div class="slot" data-index="15">
+              <div class="card-3d"><div class="card-inner">
+                <div class="card-front">
+                  <img src="C:\Users\Tayyab\Documents\DSA\project\imgs\16.jpg"
+                       alt="Memory 16"
+                       data-message="Laughing so hard we couldn’t even take a proper photo.">
+                </div>
+                <div class="card-back"></div>
+              </div></div>
+            </div>
+
+            <!-- 16 -->
+            <div class="slot" data-index="16">
+              <div class="card-3d"><div class="card-inner">
+                <div class="card-front">
+                  <img src="C:\Users\Tayyab\Documents\DSA\project\imgs\17.jpg"
+                       alt="Memory 17"
+                       data-message="Seven years of us, and it still feels like the beginning.">
+                </div>
+                <div class="card-back"></div>
+              </div></div>
+            </div>
+
+            <!-- 17 -->
+            <div class="slot" data-index="17">
+              <div class="card-3d"><div class="card-inner">
+                <div class="card-front">
+                  <img src="C:\Users\Tayyab\Documents\DSA\project\imgs\18.jpg"
+                       alt="Memory 18"
+                       data-message="A lifetime to go, and I want every chapter to be with you.">
+                </div>
+                <div class="card-back"></div>
+              </div></div>
+            </div>
+
+          </div>
+
+          <div class="dots" id="dots"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const carousel = document.getElementById('carousel');
+    const slots = Array.from(carousel.querySelectorAll('.slot'));
+    const dotsEl = document.getElementById('dots');
+    let active = 0;
+
+    // copy data-message from <img> to the card-back
+    slots.forEach(slot => {
+      const img = slot.querySelector('.card-front img');
+      const back = slot.querySelector('.card-back');
+      if (img && back) back.textContent = img.dataset.message || "A beautiful memory.";
+    });
+
+    // create dots
+    slots.forEach((s,i)=>{ 
+      const d=document.createElement('div');
+      d.className='dot'+(i===active?' active':'');
+      d.dataset.index=i;
+      d.addEventListener('click',()=> goTo(i));
+      dotsEl.appendChild(d);
+    });
+
+    function updateDots(){
+      Array.from(dotsEl.children).forEach((d,i)=> d.className = 'dot'+(i===active? ' active':''));
+    }
+
+    function getAngleStep(){
+      const val = getComputedStyle(document.documentElement).getPropertyValue('--angle-step') || '18deg';
+      return parseFloat(val);
+    }
+
+    function position(){
+      const n = slots.length;
+      const width = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--carousel-size')) || 900;
+      const radius = (width/2) - 30;
+      const angleStep = getAngleStep();
+      for(let i=0;i<n;i++){
+        const slot = slots[i];
+        const offsetRaw = (i - active + n) % n;
+        let k = offsetRaw;
+        if(k > n/2) k = k - n;
+
+        const angle = k * angleStep;
+        const rad = angle * Math.PI/180;
+
+        const x = Math.sin(rad) * radius;
+        const y = Math.abs(Math.cos(rad)) * 22 + (Math.abs(k) > 3 ? 12 : 0);
+
+        const distanceFactor = Math.min(Math.abs(k), 5);
+        const scale = i===active ? 1 : Math.max(0.78, 1 - distanceFactor * 0.08);
+
+        const rot = i===active ? 0 : (k * 8);
+
+        slot.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) rotate(${rot}deg) scale(${scale})`;
+
+        slot.classList.remove('center','side','dim');
+        if(i === active) slot.classList.add('center');
+        else if(Math.abs(k) <= 2) slot.classList.add('side');
+        else slot.classList.add('dim');
+      }
+    }
+
+    position(); updateDots();
+
+    function goTo(index){
+      active = ((index % slots.length) + slots.length) % slots.length;
+      carousel.querySelectorAll('.card-inner').forEach(ci=> ci.classList.remove('flipped'));
+      position(); updateDots();
+    }
+
+    slots.forEach((slot, i)=>{
+      slot.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const inner = slot.querySelector('.card-inner');
+        if(i === active){
+          inner.classList.toggle('flipped');
+        } else {
+          carousel.querySelectorAll('.card-inner.flipped').forEach(ci=> ci.classList.remove('flipped'));
+          goTo(i);
+        }
+      });
+    });
+
+    carousel.addEventListener('click', (e)=>{ if(e.target === carousel) goTo(active+1); });
+
+    document.addEventListener('keydown', (e)=>{
+      if(e.key==='ArrowRight') goTo(active+1);
+      if(e.key==='ArrowLeft') goTo(active-1);
+      if(e.key==='Escape') carousel.querySelectorAll('.card-inner.flipped').forEach(ci=> ci.classList.remove('flipped'));
+    });
+
+    window.updateMessage = function(index, text){
+      const slot = slots[index];
+      if(!slot) return;
+      slot.querySelector('.card-back').textContent = text;
+      slot.querySelector('.card-front img').dataset.message = text;
+    }
+
+    window.addEventListener('resize', () => position());
+  </script>
+</body>
+</html>
