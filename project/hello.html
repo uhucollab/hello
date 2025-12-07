@@ -16,12 +16,59 @@
       --max-visible:5;
     }
     *{box-sizing:border-box}
+
+    /* GLOBAL BACKGROUND + EFFECTS */
     html,body{
-      height:100%;margin:0;
+      height:100%;
+      margin:0;
       font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      background:radial-gradient(circle at top,#fffde7 0,#ffe082 45%,#ffca28 100%);
+
+      /* smooth, rich golden gradient */
+      background: linear-gradient(180deg, #ffafcc 0%, #ff6fa3 40%, #d946ef 100%);
+      background-attachment:fixed;
+
       color:#111;
+      position:relative;
+      overflow-x:hidden;
     }
+
+    /* vignette around edges */
+    html::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:radial-gradient(circle at center,
+        transparent 60%,
+        rgba(0,0,0,0.15) 100%);
+      z-index:-1;
+    }
+
+    /* subtle sparkles floating upwards */
+    html::after{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,0.9) 0, rgba(255,255,255,0) 60%),
+        radial-gradient(circle, rgba(255,255,255,0.7) 0, rgba(255,255,255,0) 60%),
+        radial-gradient(circle, rgba(255,255,255,0.6) 0, rgba(255,255,255,0) 60%);
+      background-size: 5px 5px, 4px 4px, 6px 6px;
+      background-position:
+        20% 30%,
+        70% 10%,
+        50% 80%;
+      animation: sparkleMove 12s infinite linear;
+      opacity:0.55;
+      z-index:-1;
+    }
+
+    @keyframes sparkleMove{
+      0%{ transform:translateY(0px); }
+      100%{ transform:translateY(-60px); }
+    }
+
     .container{max-width:1200px;margin:28px auto;padding:20px}
     header{
       display:flex;
@@ -171,6 +218,9 @@
       overflow:visible;
       -webkit-user-select:none;
       user-select:none;
+
+      /* glow behind whole carousel */
+      filter:drop-shadow(0 40px 80px rgba(0,0,0,0.25));
     }
 
     .slot{
@@ -200,7 +250,7 @@
     }
     .card-inner.flipped{transform:rotateY(180deg)}
 
-    /* FRONT & BACK SURFACES – now flex to center content */
+    /* FRONT & BACK SURFACES – flex to center content */
     .card-front,
     .card-back{
       position:absolute;
@@ -214,7 +264,7 @@
       justify-content:center;
     }
 
-    /* IMAGES – contain, no cropping, centered */
+    /* IMAGES – contain, no cropping, centered, glossy */
     .card-front img{
       max-width:100%;
       max-height:100%;
@@ -223,6 +273,9 @@
       object-fit:contain;
       display:block;
       background:#f5f5f5; /* behind letterbox bars */
+
+      border-radius:12px;
+      box-shadow:0 10px 25px rgba(0,0,0,0.25);
     }
 
     .card-back{
@@ -234,6 +287,7 @@
       text-align:center;
       font-size:18px;
       line-height:1.4;
+      box-shadow:0 10px 25px rgba(0,0,0,0.25);
     }
 
     .slot.center{z-index:60;filter:none;opacity:1}
@@ -243,7 +297,7 @@
 
     .dots{display:flex;gap:8px;margin-top:14px}
     .dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.6);opacity:.6;cursor:pointer}
-    .dot.active{background:white;opacity:1;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+    .dot.active{background:white;opacity:1;box-shadow:0 4px 12px rgba(0,0,0,0.25)}
 
     @media (max-width:1100px){
         :root{--carousel-size:920px;--thumb-w:420px;--thumb-h:280px}
@@ -514,8 +568,7 @@
                        alt="Memory 18"
                        data-message="Happy 7 years baby ❤️. I could never ever get a better life partner then you .
                        You make my life complete and I'll always be grateful for this day without you nothing would have happened.
-                       Thank you for everything my bestest baby ❤️ demnn we look so good together babyyy🤭
-                       ">
+                       Thank you for everything my bestest baby ❤️ demnn we look so good together babyyy🤭">
                 </div>
                 <div class="card-back"></div>
               </div></div>
@@ -631,4 +684,3 @@
   </script>
 </body>
 </html>
-
